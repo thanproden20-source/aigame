@@ -13,11 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Giai nen ma nguon
+      - name: Giai nen ban moi nhat
         run: |
-          if [ -f source.zip ]; then unzip -o -q source.zip -d . ; fi
-          ls -la
+          MOI=""; TG=0
+          for f in *.zip; do
+            [ -f "$f" ] || continue
+            t=$(git log -1 --format=%ct -- "$f")
+            if [ "${t:-0}" -ge "$TG" ]; then TG=${t:-0}; MOI="$f"; fi
+          done
+          echo "Dung file: $MOI"
+          unzip -o -q "$MOI" -d .
+          grep versionName app/build.gradle.kts
 
       - uses: actions/setup-java@v4
         with:
@@ -35,6 +44,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk AiChoiGame.apk
+          cp app/build/outputs/apk/debug/app-debug.apk AutoChoiGame.apk
           TAG="v${{ github.run_number }}"
-          gh release create "$TAG" AiChoiGame.apk --title "AI Choi Game $TAG" --notes "Tai file AiChoiGame.apk ben duoi de cai len dien thoai."
+          gh release create "$TAG" AutoChoiGame.apk --title "Auto Choi Game $TAG" --notes "Tai file AutoChoiGame.apk ben duoi de cai len dien thoai."
